@@ -1,509 +1,450 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ckb" dir="rtl">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Dynamic Domino Score Keeper</title>
-   <script src="https://cdn.tailwindcss.com"></script>
-   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-   <style>
-       body {
-           font-family: 'Inter', sans-serif;
-           background-color: #f7f9fb;
-           display: flex;
-           justify-content: center;
-           align-items: flex-start;
-           min-height: 100vh;
-           padding: 1rem;
-       }
-       .score-button {
-           transition: all 0.2s;
-           cursor: pointer;
-           user-select: none;
-           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-       }
-       .score-button:active, .action-button:active {
-           transform: scale(0.98);
-       }
-       
-       /* Custom styles for team card color cycling */
-       .color-indigo { border-top-color: #4f46e5; background-color: #eef2ff; }
-       .color-purple { border-top-color: #9333ea; background-color: #faf5ff; }
-       .color-teal { border-top-color: #14b8a6; background-color: #f0fdfa; }
-       .color-rose { border-top-color: #e11d48; background-color: #fff1f2; }
-       .color-orange { border-top-color: #f97316; background-color: #fff7ed; }
-       .color-lime { border-top-color: #84cc16; background-color: #f7fee7; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شوێنکەوتووی دۆمینە</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Core Dark Mode Palette
+                        'app-bg': '#0f172a',    // Deep Navy (Slate 900)
+                        'card-bg': '#1e293b',   // Slightly lighter card background (Slate 800)
+                        'primary': '#3b82f6',   // Bright Blue for primary actions (Blue 500)
+                        'primary-hover': '#2563eb', // Darker Blue on hover
+                        'text-light': '#f8fafc', // White text (Slate 50)
+                        'text-muted': '#94a3b8', // Gray text for subtle labels (Slate 400)
+                    }
+                }
+            },
+            safelist: [
+                'bg-primary', 'hover:bg-primary-hover', 'ring-primary/50',
+                'color-indigo', 'color-purple', 'color-teal', 'color-rose', 'color-orange', 'color-lime',
+                'text-indigo-400', 'text-purple-400', 'text-teal-400', 'text-rose-400', 'text-orange-400', 'text-lime-400',
+                'text-indigo-200', 'text-purple-200', 'text-teal-200', 'text-rose-200', 'text-orange-200', 'text-lime-200',
+                'bg-indigo-600', 'bg-purple-600', 'bg-teal-600', 'bg-rose-600', 'bg-orange-600', 'bg-lime-600',
+                'hover:bg-indigo-700', 'hover:bg-purple-700', 'hover:bg-teal-700', 'hover:bg-rose-700', 'hover:bg-orange-700', 'hover:bg-lime-700',
+                'ring-indigo-300', 'ring-purple-300', 'ring-teal-300', 'ring-rose-300', 'ring-orange-300', 'ring-lime-300',
+            ]
+        }
+    </script>
 
-       .text-indigo { color: #4f46e5; }
-       .text-purple { color: #9333ea; }
-       .text-teal { color: #14b8a6; }
-       .text-rose { color: #e11d48; }
-       .text-orange { color: #f97316; }
-       .text-lime { color: #84cc16; }
-       
-       /* Utility for hiding/showing modes */
-       .mode-hidden { display: none; }
-   </style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        
+        #app {
+            background-color: #1e293b !important; 
+            color: var(--text-light);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 5px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-button, .action-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+        }
+        .score-button:active, .action-button:active {
+            transform: scale(0.98);
+        }
+        /* Style for disabled button, kept subtle but visible */
+        .action-button:disabled {
+            opacity: 0.7; /* Increased opacity for better visibility */
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); /* Reduced shadow for disabled state */
+            background-color: #16a34a !important; /* Keep the green color, just change opacity */
+        }
+        
+        .color-indigo { border-top-color: #6366f1; background-color: #313c54; }
+        .color-purple { border-top-color: #a855f7; background-color: #3b3156; }
+        .color-teal { border-top-color: #2dd4bf; background-color: #2f454f; }
+        .color-rose { border-top-color: #f472b6; background-color: #553142; }
+        .color-orange { border-top-color: #fb923c; background-color: #554431; }
+        .color-lime { border-top-color: #a3e635; background-color: #4a5431; }
+        
+        .mode-hidden { display: none; }
+
+        #new-team-name {
+            text-align: right;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-app-bg">
 
-   <div id="app" class="w-full max-w-4xl bg-white p-6 rounded-3xl shadow-2xl border border-gray-100 mt-8">
-       <h1 class="text-3xl font-extrabold text-gray-900 text-center mb-6">
-           Domino Score Tracker
-       </h1>
-       
-       <!-- Score Display Container (Dynamic) - Always Visible -->
-       <h2 class="text-xl font-extrabold text-gray-900 mb-4">Current Scores</h2>
-       <div id="score-display-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-           <!-- Dynamic Team Cards will be inserted here -->
-       </div>
+    <div id="app" class="w-full max-w-4xl p-8 rounded-3xl mt-8">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-text-light tracking-tight">
+                <span class="text-primary mr-1">◆</span> شوێنکەوتووی دۆمینە
+            </h1>
+        </header>
+        
+        <h2 class="text-2xl font-bold text-text-light mb-4">پایە بەردەوامەکان 🏆</h2>
+        <div id="score-display-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            </div>
 
-       <!-- SETUP MODE: Team Management and Start Button -->
-       <div id="setup-mode">
-           <div class="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
-               <h2 class="text-lg font-bold text-gray-700 mb-3">Add Teams to Start</h2>
-               <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                   <input type="text" id="new-team-name" placeholder="Enter team name (e.g., The Winners)"
-                          class="flex-grow p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" />
-                   <button id="add-team-button" class="action-button bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-300 shadow-md">
-                       Add New Team
-                   </button>
-               </div>
-               <button id="start-game-button" class="action-button w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition duration-150 ease-in-out focus:outline-none focus:ring-4 focus:ring-indigo-300 shadow-xl text-xl">
-                   Start Game!
-               </button>
-           </div>
-       </div>
-       
-       <!-- GAME MODE: Scoring and Controls -->
-       <div id="game-mode" class="mode-hidden">
-           
-           <!-- Selected Value Display -->
-           <div class="text-center mb-6 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
-               <p class="text-sm font-medium text-gray-700">Currently Selected Value:</p>
-               <p id="selected-value-display" class="text-2xl font-bold text-yellow-700">0</p>
-           </div>
+        <div id="setup-mode">
+            <div class="mb-10 p-6 bg-app-bg rounded-2xl border border-card-bg">
+                <h2 class="text-xl font-bold text-text-light mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.653-.162-1.294-.473-1.857M6 14s2-1 6-1 6 1 6 1M4 12a1 1 0 11-2 0 1 1 0 012 0zm16 0a1 1 0 11-2 0 1 1 0 012 0zm-4-3a4 4 0 100-8 4 4 0 000 8zM8 9a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                    بەڕێوەبردنی تیپەکان
+                </h2>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-5">
+                    <input type="text" id="new-team-name" placeholder="ناوی تیپ بنووسە (بۆ نموونە: پاڵەوانەکان)"
+                            class="flex-grow p-4 border-2 border-card-bg bg-app-bg text-text-light rounded-xl focus:ring-4 focus:ring-primary/50 focus:border-primary transition duration-200 ease-in-out placeholder-text-muted" />
+                    <button id="add-team-button" class="action-button bg-primary hover:bg-primary-hover text-white font-bold py-4 px-8 rounded-xl transition shadow-lg whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-0.5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        زیادکردنی تیپ
+                    </button>
+                </div>
+                
+                <button id="start-game-button" 
+                        class="action-button w-full bg-green-600 hover:bg-green-700 text-white font-extrabold py-5 rounded-xl transition shadow-xl text-xl uppercase tracking-wider focus:ring-4 focus:ring-green-300"
+                        onclick="handleStartGameAttempt()">
+                    دەستپێکردنی یاری!
+                </button>
+            </div>
+        </div>
+        
+        <div id="game-mode" class="mode-hidden">
+            
+            <div class="mb-8">
+                
+                <h2 class="text-xl font-bold text-text-light mb-3">١. خاڵە تۆمارکراوەکان دیاری بکە</h2>
+                <div id="value-buttons" class="grid grid-cols-4 md:grid-cols-7 gap-3">
+                    </div>
+                
+                </div>
 
-           <!-- Value Selection Buttons -->
-           <h2 class="text-lg font-bold text-gray-700 mb-3">1. Select Points</h2>
-           <div id="value-buttons" class="grid grid-cols-4 md:grid-cols-7 gap-3 mb-6">
-               <!-- Buttons will be generated here -->
-           </div>
+            <h2 class="text-xl font-bold text-text-light mb-3">٢. خاڵ بدە بە تیپ</h2>
+            <div id="team-assignment-buttons" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
+                </div>
 
-           <!-- Team Assignment Buttons (Dynamic) -->
-           <h2 class="text-lg font-bold text-gray-700 mb-3">2. Assign to Team</h2>
-           <div id="team-assignment-buttons" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-               <!-- Dynamic Team Assignment Buttons will be inserted here -->
-           </div>
+            <div class="mt-8 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between gap-4">
+                <button id="undo-button" disabled class="action-button w-full sm:w-1/2 bg-slate-700 hover:bg-slate-600 text-text-light font-semibold py-4 rounded-xl transition duration-150 ease-in-out shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a4 4 0 014 4v2a2 2 0 002 2h0m-7-2l-2-2m-2-2l2 2" /></svg>
+                    گەڕاندنەوەی دوا جوڵە
+                </button>
+                <button id="reset-button" class="action-button w-full sm:w-1/2 bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-xl transition duration-150 ease-in-out shadow-lg focus:ring-4 focus:ring-red-300">
+                    سفرکردنەوەی هەمووان
+                </button>
+            </div>
+        </div>
 
-           <!-- Controls (Undo/Reset) -->
-           <div class="mt-8 pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between gap-4">
-               <button id="undo-button" class="action-button w-full sm:w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 rounded-xl transition duration-150 ease-in-out">
-                   Undo Last Move
-               </button>
-               <button id="reset-button" class="action-button w-full sm:w-1/2 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl transition duration-150 ease-in-out">
-                   Reset All
-               </button>
-           </div>
-       </div>
+        
+        <div id="confirmation-box" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden" onclick="cancelAction()">
+            <div class="bg-card-bg p-8 rounded-2xl shadow-2xl w-11/12 max-w-md text-center" onclick="event.stopPropagation()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500 mx-auto mb-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                <p id="confirmation-text" class="text-xl font-semibold text-text-light mb-6">دڵنیایت؟</p>
+                <div class="flex justify-around gap-4">
+                    <button id="confirm-yes" class="action-button bg-red-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-700 transition w-full shadow-lg">بەڵێ، دڵنیا</button>
+                    <button id="confirm-no" onclick="cancelAction()" class="action-button bg-slate-700 text-text-light font-semibold px-6 py-3 rounded-xl hover:bg-slate-600 transition w-full">هەڵوەشاندنەوە</button>
+                </div>
+            </div>
+        </div>
 
-       
-       <!-- Custom Confirmation Modal (Used for Reset and Delete) -->
-       <div id="confirmation-box" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center hidden" onclick="cancelAction()">
-           <div class="bg-white p-6 rounded-xl shadow-2xl w-11/12 max-w-sm text-center" onclick="event.stopPropagation()">
-               <p id="confirmation-text" class="text-lg font-semibold text-gray-800 mb-4">Are you sure?</p>
-               <div class="flex justify-around gap-4">
-                   <button id="confirm-yes" class="action-button bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition w-1/2">Yes</button>
-                   <button id="confirm-no" onclick="cancelAction()" class="action-button bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition w-1/2">Cancel</button>
-               </div>
-           </div>
-       </div>
+        <div id="message-box" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden" onclick="hideMessage()">
+            <div class="bg-card-bg p-8 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center" onclick="event.stopPropagation()">
+                <p id="message-text" class="text-lg font-semibold text-text-light mb-5"></p>
+                <button onclick="hideMessage()" class="action-button bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover transition w-full">باشە</button>
+            </div>
+        </div>
+    </div>
 
-       <!-- Message Box (Simple OK messages) -->
-       <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center hidden" onclick="hideMessage()">
-           <div class="bg-white p-6 rounded-xl shadow-2xl w-11/12 max-w-sm text-center" onclick="event.stopPropagation()">
-               <p id="message-text" class="text-lg font-semibold text-gray-800 mb-4"></p>
-               <button onclick="hideMessage()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">OK</button>
-           </div>
-       </div>
-   </div>
+    <script>
+        // --- State Management ---
+        const colorCycle = ['indigo', 'purple', 'teal', 'rose', 'orange', 'lime'];
+        
+        const state = {
+            teams: {},
+            selectedValue: 0,
+            history: [],
+            nextTeamId: 1,
+            isGameActive: false
+        };
 
-   <script>
-       // --- State Management ---
-       const colorCycle = ['indigo', 'purple', 'teal', 'rose', 'orange', 'lime'];
-       
-       const state = {
-           teams: {}, // maps teamId -> { name, score, color }
-           selectedValue: 0,
-           history: [], // stores { teamId: 't1', value: 5 }
-           nextTeamId: 1,
-           isGameActive: false // Controls setup vs game mode
-       };
+        let pendingConfirmationCallback = null; 
+        const scoreValues = [5, 10, 15, 20, 25, 30, 35];
+        const elements = {
+            // REMOVED: selectedValueDisplay: document.getElementById('selected-value-display'),
+            valueButtonsContainer: document.getElementById('value-buttons'),
+            scoreDisplayContainer: document.getElementById('score-display-container'),
+            teamAssignmentButtons: document.getElementById('team-assignment-buttons'),
+            undoButton: document.getElementById('undo-button'),
+            resetButton: document.getElementById('reset-button'),
+            setupMode: document.getElementById('setup-mode'),
+            gameMode: document.getElementById('game-mode'),
+            startButton: document.getElementById('start-game-button'),
+            messageBox: document.getElementById('message-box'),
+            messageText: document.getElementById('message-text'),
+            confirmationBox: document.getElementById('confirmation-box'),
+            confirmationText: document.getElementById('confirmation-text'),
+            confirmYesButton: document.getElementById('confirm-yes'),
+            newTeamNameInput: document.getElementById('new-team-name'),
+            addTeamButton: document.getElementById('add-team-button'),
+        };
 
-       let pendingConfirmationCallback = null; 
+        // --- Modal Functions (UNCHANGED) ---
+        function showMessage(text) { elements.messageText.textContent = text; elements.messageBox.style.display = 'flex'; }
+        function hideMessage() { elements.messageBox.style.display = 'none'; }
+        function showConfirmation(text, callback) { elements.confirmationText.textContent = text; elements.confirmationBox.style.display = 'flex'; pendingConfirmationCallback = callback; }
+        function confirmAction() { if (pendingConfirmationCallback) { pendingConfirmationCallback(); } elements.confirmationBox.style.display = 'none'; pendingConfirmationCallback = null; }
+        function cancelAction() { elements.confirmationBox.style.display = 'none'; pendingConfirmationCallback = null; }
 
-       const scoreValues = [5, 10, 15, 20, 25, 30, 35];
+        // --- Utility Functions (UNCHANGED) ---
+        function createTeam(name) {
+            const teamId = 't' + state.nextTeamId++;
+            const color = colorCycle[(state.nextTeamId - 2) % colorCycle.length];
+            state.teams[teamId] = { id: teamId, name: name || `Team ${state.nextTeamId - 1}`, score: 0, color: color };
+        }
+        function getButtonClass(value, isActive) {
+            const baseClass = 'score-button text-xl font-bold p-3 rounded-lg w-full';
+            if (isActive) { return `${baseClass} bg-primary text-white shadow-lg ring-4 ring-blue-300/50`; } 
+            else { return `${baseClass} bg-app-bg text-text-light border border-slate-700 hover:bg-slate-700`; }
+        }
 
-       // --- DOM Elements ---
-       const elements = {
-           selectedValueDisplay: document.getElementById('selected-value-display'),
-           valueButtonsContainer: document.getElementById('value-buttons'),
-           scoreDisplayContainer: document.getElementById('score-display-container'),
-           teamAssignmentButtons: document.getElementById('team-assignment-buttons'),
-           undoButton: document.getElementById('undo-button'),
-           resetButton: document.getElementById('reset-button'),
-           
-           // Mode Containers
-           setupMode: document.getElementById('setup-mode'),
-           gameMode: document.getElementById('game-mode'),
-           startButton: document.getElementById('start-game-button'),
+        // --- Rendering Functions (Modified render and renderScoreCards) ---
+        function renderScoreCards() {
+            elements.scoreDisplayContainer.innerHTML = '';
+            Object.values(state.teams).forEach(team => {
+                const card = document.createElement('div');
+                card.className = `p-5 color-${team.color} border-t-4 rounded-xl shadow-lg flex flex-col justify-between transition duration-300`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start w-full">
+                         <p class="text-sm font-semibold uppercase tracking-wider text-${team.color}-400">${team.name}</p>
+                         <button data-team-id="${team.id}" class="remove-team-btn text-text-muted hover:text-red-500 text-xs font-medium transition p-1 rounded-full hover:bg-card-bg" title="لابردنی تیپ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                         </button>
+                    </div>
+                    <p id="score-${team.id}" class="text-6xl font-extrabold text-${team.color}-200 mt-2 text-center transition-transform duration-300">${team.score}</p>
+                `;
+                elements.scoreDisplayContainer.appendChild(card);
+            });
 
-           // Message Modal Elements
-           messageBox: document.getElementById('message-box'),
-           messageText: document.getElementById('message-text'),
+            document.querySelectorAll('.remove-team-btn').forEach(btn => {
+                if (state.isGameActive) {
+                    btn.style.visibility = 'hidden';
+                    btn.removeEventListener('click', handleRemoveTeam);
+                } else {
+                    btn.style.visibility = 'visible';
+                    btn.addEventListener('click', handleRemoveTeam);
+                }
+            });
 
-           // Confirmation Modal Elements
-           confirmationBox: document.getElementById('confirmation-box'),
-           confirmationText: document.getElementById('confirmation-text'),
-           confirmYesButton: document.getElementById('confirm-yes'),
-           
-           newTeamNameInput: document.getElementById('new-team-name'),
-           addTeamButton: document.getElementById('add-team-button'),
-       };
+            elements.startButton.disabled = Object.keys(state.teams).length === 0;
+        }
 
-       // --- Modal Functions ---
+        function renderAssignmentButtons() {
+            elements.teamAssignmentButtons.innerHTML = '';
+            Object.values(state.teams).forEach(team => {
+                const button = document.createElement('button');
+                button.id = `add-${team.id}`;
+                button.dataset.teamId = team.id;
+                button.className = `action-button bg-${team.color}-600 hover:bg-${team.color}-700 text-white font-bold py-4 rounded-xl transition duration-150 ease-in-out text-base focus:outline-none focus:ring-4 ring-${team.color}-300 shadow-lg`;
+                button.textContent = `+${state.selectedValue} بۆ ${team.name}`;
+                button.disabled = state.selectedValue === 0;
+                
+                button.addEventListener('click', (e) => handleTeamScoring(e.currentTarget.dataset.teamId));
+                elements.teamAssignmentButtons.appendChild(button);
+            });
+        }
 
-       /** Shows a custom message box (OK only) */
-       function showMessage(text) {
-           elements.messageText.textContent = text;
-           elements.messageBox.style.display = 'flex';
-       }
+        function render() {
+            if (state.isGameActive) {
+                elements.setupMode.classList.add('mode-hidden');
+                elements.gameMode.classList.remove('mode-hidden');
+                elements.resetButton.textContent = 'کۆتاییهێنان بە یاری و سفرکردنەوەی خاڵەکان';
+            } else {
+                elements.setupMode.classList.remove('mode-hidden');
+                elements.gameMode.classList.add('mode-hidden');
+                elements.resetButton.textContent = 'سڕینەوەی هەموو تیپەکان';
+            }
 
-       /** Hides the custom message box */
-       function hideMessage() {
-           elements.messageBox.style.display = 'none';
-       }
-       
-       /** Shows a confirmation modal (Yes/Cancel) */
-       function showConfirmation(text, callback) {
-           elements.confirmationText.textContent = text;
-           elements.confirmationBox.style.display = 'flex';
-           pendingConfirmationCallback = callback;
-       }
+            renderScoreCards();
+            renderAssignmentButtons();
+            
+            // LOGIC CHANGE: We no longer update a dedicated display element for selected value.
+            // We just ensure the buttons reflect the state.
 
-       /** Executes the confirmation callback and closes the modal */
-       function confirmAction() {
-           if (pendingConfirmationCallback) {
-               pendingConfirmationCallback();
-           }
-           elements.confirmationBox.style.display = 'none';
-           pendingConfirmationCallback = null;
-       }
+            document.querySelectorAll('.score-button').forEach(btn => {
+                const value = parseInt(btn.dataset.value);
+                btn.className = getButtonClass(value, value === state.selectedValue);
+            });
+            
+            elements.undoButton.disabled = state.history.length === 0;
+            if (state.history.length > 0) {
+                const lastMove = state.history[state.history.length - 1];
+                const teamName = state.teams[lastMove.teamId] ? state.teams[lastMove.teamId].name : 'تیمی سڕاوە';
+                elements.undoButton.textContent = `گەڕاندنەوەی (${lastMove.value} بۆ ${teamName})`;
+            } else {
+                elements.undoButton.textContent = 'گەڕاندنەوەی دوا جوڵە';
+            }
+        }
+        
+        // --- Event Handlers ---
+        function handleStartGameAttempt() {
+            if (Object.keys(state.teams).length < 1) {
+                showMessage("سەرەتا لانیکەم یەک ناوی تیپ بنووسە.");
+                return;
+            }
+            handleStartGame();
+        }
 
-       /** Closes the modal without executing the callback */
-       function cancelAction() {
-           elements.confirmationBox.style.display = 'none';
-           pendingConfirmationCallback = null;
-       }
+        function handleStartGame() {
+            state.isGameActive = true;
+            render();
+        }
 
-       // --- Utility Functions ---
+        function handleValueSelection(event) {
+            const newValue = parseInt(event.currentTarget.dataset.value);
+            // Toggle logic remains the same
+            state.selectedValue = state.selectedValue === newValue ? 0 : newValue; 
+            render();
+        }
 
-       /** Creates a new team object */
-       function createTeam(name) {
-           const teamId = 't' + state.nextTeamId++;
-           const color = colorCycle[(state.nextTeamId - 2) % colorCycle.length]; // Cycle colors
-           state.teams[teamId] = {
-               id: teamId,
-               name: name || `Team ${state.nextTeamId - 1}`,
-               score: 0,
-               color: color
-           };
-       }
+        function handleTeamScoring(teamId) {
+            if (state.selectedValue === 0) {
+                showMessage("تکایە سەرەتا بەهای خاڵێک (٥، ١٠، ١٥، هتد) دیاری بکە.");
+                return;
+            }
 
-       /** Generates the appropriate CSS class for a score button */
-       function getButtonClass(value, isActive) {
-           const baseClass = 'score-button text-xl font-extrabold p-3 rounded-xl w-full';
-           if (isActive) {
-               return `${baseClass} bg-blue-600 text-white shadow-lg ring-4 ring-blue-300`;
-           } else {
-               return `${baseClass} bg-gray-100 text-gray-800 hover:bg-gray-200`;
-           }
-       }
+            state.teams[teamId].score += state.selectedValue;
+            state.history.push({ teamId: teamId, value: state.selectedValue });
+            state.selectedValue = 0; // Reset selected value after scoring
+            render();
+        }
 
-       // --- Rendering Functions ---
+        function handleAddTeam() {
+            const name = elements.newTeamNameInput.value.trim();
+            if (Object.keys(state.teams).length >= 6) {
+                 showMessage("گەیشتیتە زۆرترین ژمارەی پێشنیارکراوی تیپەکان (٦) بۆ ئەم شێوازە.");
+                 return;
+            }
+            if (name.length < 1 || name.length > 20) {
+                showMessage("تکایە ناوی تیپێک بنووسە لەنێوان ١ بۆ ٢٠ پیتدا.");
+                return;
+            }
+            
+            const isDuplicate = Object.values(state.teams).some(team => team.name.toLowerCase() === name.toLowerCase());
+            if (isDuplicate) {
+                showMessage(`تیپێک بەناوی "${name}" پێشتر هەیە.`);
+                return;
+            }
 
-       /** Renders the team score cards */
-       function renderScoreCards() {
-           elements.scoreDisplayContainer.innerHTML = '';
-           
-           Object.values(state.teams).forEach(team => {
-               const card = document.createElement('div');
-               card.className = `p-4 color-${team.color} border-t-4 rounded-xl shadow-lg flex flex-col items-center border-${team.color}-600`;
-               card.innerHTML = `
-                   <div class="flex justify-between items-center w-full mb-1">
-                        <p class="text-xs font-semibold uppercase text-${team.color}-600">${team.name}</p>
-                        <button data-team-id="${team.id}" class="remove-team-btn text-gray-500 hover:text-red-500 text-xs font-medium transition" title="Remove Team">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                           </svg>
-                        </button>
-                   </div>
-                   <p id="score-${team.id}" class="text-5xl font-extrabold text-${team.color}-900 mt-1 transition-transform duration-300">${team.score}</p>
-               `;
-               elements.scoreDisplayContainer.appendChild(card);
-           });
+            createTeam(name);
+            elements.newTeamNameInput.value = '';
+            render();
+        }
 
-           // Attach removal listeners (only available in setup mode)
-           document.querySelectorAll('.remove-team-btn').forEach(btn => {
-               if (state.isGameActive) {
-                   btn.style.visibility = 'hidden';
-                   btn.removeEventListener('click', handleRemoveTeam); // Ensure no lingering listeners
-               } else {
-                   btn.style.visibility = 'visible';
-                   // Re-attach listener every render since innerHTML clears them
-                   btn.addEventListener('click', handleRemoveTeam);
-               }
-           });
+        function handleUndo() {
+            if (state.history.length === 0) {
+                showMessage("هیچ جوڵەیەک نییە بۆ گەڕاندنەوە!");
+                return;
+            }
 
-           // Enable/disable start button based on teams
-           elements.startButton.disabled = Object.keys(state.teams).length === 0;
-           elements.startButton.textContent = elements.startButton.disabled ? 'Add Teams First' : 'Start Game!';
-       }
+            const lastMove = state.history.pop();
+            const team = state.teams[lastMove.teamId];
 
-       /** Renders the team assignment buttons */
-       function renderAssignmentButtons() {
-           elements.teamAssignmentButtons.innerHTML = '';
+            if (team) {
+                team.score -= lastMove.value;
+                showMessage(`${lastMove.value} خاڵ لە "${team.name}" گەڕێندرایەوە.`);
+            } else {
+                 showMessage(`${lastMove.value} خاڵ گەڕێندرایەوە (تیپەکە چیتر بوونی نییە).`);
+            }
+            
+            state.selectedValue = 0;
+            render();
+        }
 
-           Object.values(state.teams).forEach(team => {
-               const button = document.createElement('button');
-               button.id = `add-${team.id}`;
-               button.dataset.teamId = team.id;
-               button.className = `action-button bg-${team.color}-600 hover-${team.color}:hover text-white font-bold py-4 rounded-xl transition duration-150 ease-in-out text-lg focus:outline-none focus:ring-4 ring-${team.color} shadow-xl`;
-               button.textContent = `Add to ${team.name}`;
-               button.addEventListener('click', (e) => handleTeamScoring(e.currentTarget.dataset.teamId));
-               elements.teamAssignmentButtons.appendChild(button);
-           });
-       }
+        function handleRemoveTeam(event) {
+            const teamIdToRemove = event.currentTarget.dataset.teamId;
+            const teamName = state.teams[teamIdToRemove].name;
+            const teamHistoryCount = state.history.filter(move => move.teamId === teamIdToRemove).length;
 
-       /** Renders the current state to the DOM */
-       function render() {
-           // Control visibility based on game state
-           if (state.isGameActive) {
-               elements.setupMode.classList.add('mode-hidden');
-               elements.gameMode.classList.remove('mode-hidden');
-               elements.resetButton.textContent = 'End Game & Reset Scores';
-           } else {
-               elements.setupMode.classList.remove('mode-hidden');
-               elements.gameMode.classList.add('mode-hidden');
-               elements.resetButton.textContent = 'Clear All Teams';
-           }
+            const confirmationMessage = `دڵنیایت کە دەتەوێت تیپی "${teamName}" بسڕیتەوە؟ ئەمە خاڵەکانیان (${state.teams[teamIdToRemove].score}) سفر دەکاتەوە و ${teamHistoryCount} جوڵە لە مێژوودا دەسڕێتەوە.`;
 
-           renderScoreCards();
-           renderAssignmentButtons();
-           
-           // Update selected value display
-           elements.selectedValueDisplay.textContent = state.selectedValue;
-           elements.selectedValueDisplay.className = `text-2xl font-bold ${state.selectedValue > 0 ? 'text-yellow-700' : 'text-gray-400'}`;
+            showConfirmation(confirmationMessage, () => {
+                delete state.teams[teamIdToRemove];
+                state.history = state.history.filter(move => move.teamId !== teamIdToRemove);
+                state.selectedValue = 0;
+                
+                render();
+                showMessage(`تیپی "${teamName}" بە سەرکەوتوویی سڕایەوە.`);
+            });
+            event.stopPropagation();
+        }
+        
+        function handleReset() {
+            let confirmationMessage;
+            let resetFunction;
 
-           // Update button highlights for score values
-           document.querySelectorAll('.score-button').forEach(btn => {
-               const value = parseInt(btn.dataset.value);
-               btn.className = getButtonClass(value, value === state.selectedValue);
-           });
+            if (state.isGameActive) {
+                confirmationMessage = "دڵنیایت کە دەتەوێت کۆتایی بە یاری ئێستا بهێنیت؟ ئەمە هەموو خاڵەکان سفر دەکاتەوە و دەگەڕێتەوە بۆ شاشەی ئامادەکردنی تیپ.";
+                resetFunction = () => {
+                    Object.values(state.teams).forEach(team => team.score = 0);
+                    state.selectedValue = 0;
+                    state.history = [];
+                    state.isGameActive = false;
+                    render();
+                };
+            } else {
+                confirmationMessage = "دڵنیایت کە دەتەوێت هەموو تیپەکان بسڕیتەوە؟ ئەمە ناتوانرێت هەڵبوەشێندرێتەوە.";
+                resetFunction = () => {
+                    state.teams = {};
+                    state.nextTeamId = 1;
+                    state.selectedValue = 0;
+                    state.history = [];
+                    render();
+                };
+            }
+            
+            showConfirmation(confirmationMessage, resetFunction);
+        }
+        
+        // --- Initialization ---
+        function initApp() {
+            scoreValues.forEach(value => {
+                const button = document.createElement('button');
+                button.textContent = value;
+                button.dataset.value = value;
+                button.className = getButtonClass(value, false);
+                button.addEventListener('click', handleValueSelection);
+                elements.valueButtonsContainer.appendChild(button);
+            });
 
-           // Update Undo button text and state
-           elements.undoButton.disabled = state.history.length === 0;
-           if (state.history.length > 0) {
-               const lastMove = state.history[state.history.length - 1];
-               const teamName = state.teams[lastMove.teamId] ? state.teams[lastMove.teamId].name : 'Deleted Team';
-               elements.undoButton.textContent = `Undo (${lastMove.value} to ${teamName})`;
-           } else {
-               elements.undoButton.textContent = 'Undo Last Move';
-           }
-       }
+            elements.addTeamButton.addEventListener('click', handleAddTeam);
+            elements.undoButton.addEventListener('click', handleUndo);
+            elements.resetButton.addEventListener('click', handleReset);
+            elements.confirmYesButton.addEventListener('click', confirmAction);
+            
+            elements.newTeamNameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleAddTeam();
+                }
+            });
 
-       // --- Event Handlers ---
+            render();
+        }
 
-       /** Handles clicking the Start Game button */
-       function handleStartGame() {
-           if (Object.keys(state.teams).length < 1) {
-               showMessage("You must add at least one team to start the game!");
-               return;
-           }
-           state.isGameActive = true;
-           render();
-           showMessage("Game Started! Select a score and assign it to a team.");
-       }
+        window.onload = initApp;
 
-       /** Handles clicking one of the score value buttons (5, 10, etc.) */
-       function handleValueSelection(event) {
-           const newValue = parseInt(event.currentTarget.dataset.value);
-           // Toggle selection: if the same button is clicked, deselect it.
-           state.selectedValue = state.selectedValue === newValue ? 0 : newValue;
-           render();
-       }
-
-       /** Handles clicking one of the team assignment buttons */
-       function handleTeamScoring(teamId) {
-           if (state.selectedValue === 0) {
-               showMessage("Please select a score value (5, 10, 15, etc.) first.");
-               return;
-           }
-
-           // 1. Update Score
-           state.teams[teamId].score += state.selectedValue;
-
-           // 2. Add to History
-           state.history.push({ teamId: teamId, value: state.selectedValue });
-
-           // 3. Reset Selected Value
-           state.selectedValue = 0;
-
-           // 4. Render Updates
-           render();
-       }
-
-       /** Handles adding a new team */
-       function handleAddTeam() {
-           const name = elements.newTeamNameInput.value.trim();
-           if (Object.keys(state.teams).length >= 6) {
-                showMessage("You've reached the recommended maximum number of teams (6) for this layout.");
-                return;
-           }
-           if (name.length < 1 || name.length > 20) {
-               showMessage("Please enter a team name between 1 and 20 characters.");
-               return;
-           }
-           
-           // Check for duplicate names (case-insensitive)
-           const isDuplicate = Object.values(state.teams).some(team => team.name.toLowerCase() === name.toLowerCase());
-           if (isDuplicate) {
-               showMessage(`A team named "${name}" already exists.`);
-               return;
-           }
-
-           createTeam(name);
-           elements.newTeamNameInput.value = ''; // Clear input
-           render();
-       }
-
-       /** Handles the undo button click */
-       function handleUndo() {
-           if (state.history.length === 0) {
-               showMessage("No moves to undo!");
-               return;
-           }
-
-           // Pop the last move from history
-           const lastMove = state.history.pop();
-           const team = state.teams[lastMove.teamId];
-
-           if (team) {
-               // Subtract the value from the corresponding team
-               team.score -= lastMove.value;
-               showMessage(`Undid ${lastMove.value} points from ${team.name}.`);
-           } else {
-                // Handle case where team was deleted after the score was recorded
-               showMessage(`Undid ${lastMove.value} points (Team no longer exists).`);
-           }
-           
-           // Reset selected value just in case
-           state.selectedValue = 0;
-           render();
-       }
-
-       /** Handles team removal - uses custom confirmation modal */
-       function handleRemoveTeam(event) {
-           const teamIdToRemove = event.currentTarget.dataset.teamId;
-           const teamName = state.teams[teamIdToRemove].name;
-           const teamHistoryCount = state.history.filter(move => move.teamId === teamIdToRemove).length;
-
-           const confirmationMessage = `Are you sure you want to remove the team "${teamName}"? This will reset their score (${state.teams[teamIdToRemove].score}) and remove ${teamHistoryCount} moves from history.`;
-
-           showConfirmation(confirmationMessage, () => {
-               // This callback runs ONLY if the user clicks 'Yes'
-               
-               // 1. Remove team from state.teams
-               delete state.teams[teamIdToRemove];
-
-               // 2. Filter history to remove all records for this team
-               state.history = state.history.filter(move => move.teamId !== teamIdToRemove);
-
-               // 3. Reset selected value
-               state.selectedValue = 0;
-               
-               render();
-               showMessage(`Team "${teamName}" was successfully removed.`);
-           });
-           event.stopPropagation();
-       }
-       
-       /** Handles the main Reset button click - changes behavior based on game mode */
-       function handleReset() {
-           let confirmationMessage;
-           let resetFunction;
-
-           if (state.isGameActive) {
-               // Game Mode Reset
-               confirmationMessage = "Are you sure you want to END the current game? This will reset all scores to zero and return to the Team Setup screen.";
-               resetFunction = () => {
-                   // Keep teams, but reset scores/history and go to setup mode
-                   Object.values(state.teams).forEach(team => team.score = 0);
-                   state.selectedValue = 0;
-                   state.history = [];
-                   state.isGameActive = false;
-                   render();
-                   showMessage("Game ended and scores reset. Ready for a new game!");
-               };
-           } else {
-               // Setup Mode Reset (Clear All)
-               confirmationMessage = "Are you sure you want to CLEAR ALL TEAMS? This cannot be undone.";
-               resetFunction = () => {
-                   state.teams = {};
-                   state.nextTeamId = 1; // Reset ID counter
-                   state.selectedValue = 0;
-                   state.history = [];
-                   render();
-                   showMessage("All teams have been cleared. Start fresh!");
-               };
-           }
-           
-           showConfirmation(confirmationMessage, resetFunction);
-       }
-       
-       // --- Initialization ---
-       
-       function initApp() {
-           // 1. Generate Score Value Buttons
-           scoreValues.forEach(value => {
-               const button = document.createElement('button');
-               button.textContent = value;
-               button.dataset.value = value;
-               button.className = getButtonClass(value, false);
-               button.addEventListener('click', handleValueSelection);
-               elements.valueButtonsContainer.appendChild(button);
-           });
-
-           // 2. Attach Team and Control Listeners
-           elements.addTeamButton.addEventListener('click', handleAddTeam);
-           elements.startButton.addEventListener('click', handleStartGame);
-           elements.undoButton.addEventListener('click', handleUndo);
-           elements.resetButton.addEventListener('click', handleReset);
-           elements.confirmYesButton.addEventListener('click', confirmAction);
-           
-           elements.newTeamNameInput.addEventListener('keydown', (e) => {
-               if (e.key === 'Enter') {
-                   handleAddTeam();
-               }
-           });
-
-           // 3. Initial Render (starts in setup mode)
-           render();
-       }
-
-       // Initialize the app when the page loads
-       window.onload = initApp;
-
-   </script>
+    </script>
 </body>
 </html>
