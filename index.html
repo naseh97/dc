@@ -289,7 +289,7 @@
             if (state.history.length > 0) {
                 const lastMove = state.history[state.history.length - 1];
                 const teamName = state.teams[lastMove.teamId] ? state.teams[lastMove.teamId].name : 'تیما ژێچووی';
-                elements.undoButton.textContent = `${lastMove.value} خالان بزڤرینەڤە`;
+                elements.undoButton.textContent = ` ${lastMove.value} خالان بزڤرینەڤە`;
             } else {
                 elements.undoButton.textContent = 'هێشتا چ خال تومار نەکرینە';
             }
