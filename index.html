@@ -147,17 +147,10 @@
                 <input type="text" id="p-guesser-0" placeholder="Player 2 Name (Guesser)" dir="auto"><br>
             </div>
 
-            <label style="color: var(--muted); display: block; margin-bottom: 5px; text-align: left; margin-left: 38px;">Total Tries for Guessers:</label>
-            <select id="max-tries-select">
-                <option value="5">5 Tries</option>
-                <option value="7" selected>7 Tries</option>
-                <option value="10">10 Tries</option>
-            </select><br><br>
-
             <button class="main-btn" onclick="goToWordScreen()">Next: Enter Word</button>
         </div>
 
-        <!-- Phase 2: Writer Enters Word (Visible text input now) -->
+        <!-- Phase 2: Writer Enters Word -->
         <div id="setup-word-screen" class="hidden">
             <h3 id="p1-prompt">Writer: Enter Secret Word</h3>
             <input type="text" id="secret-word-input" placeholder="e.g. hungry / خواردن / مأكولات" dir="auto">
@@ -204,7 +197,7 @@
         let secretWord = "";
         let guessedLetters = [];
         let wrongGuesses = [];
-        let maxTries = 7;
+        const maxTries = 7; // Fixed to 7 tries
 
         function generatePlayerInputs() {
             let total = parseInt(document.getElementById("num-players").value);
@@ -251,8 +244,6 @@
                 let gInput = document.getElementById(`p-guesser-${i}`).value.trim();
                 guesserNames.push(gInput || `Guesser ${i + 1}`);
             }
-
-            maxTries = parseInt(document.getElementById("max-tries-select").value);
 
             document.getElementById("p1-prompt").innerText = `${writerName} (Writer): Enter Secret Word`;
 
