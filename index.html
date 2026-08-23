@@ -29,9 +29,28 @@
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            position: relative; /* Needed for absolute positioning of the exit button */
         }
 
-        h1 { margin-bottom: 5px; color: #818cf8; }
+        /* Top-Left Exit Button */
+        .exit-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .exit-btn:hover { background: #dc2626; }
+
+        h1 { margin-top: 15px; margin-bottom: 5px; color: #818cf8; }
         p { color: var(--muted); }
 
         input, select {
@@ -45,7 +64,7 @@
             margin-bottom: 15px;
         }
 
-        button {
+        button.main-btn {
             background-color: var(--primary);
             color: white;
             border: none;
@@ -57,7 +76,7 @@
             transition: background 0.2s;
         }
 
-        button:hover { background-color: #4338ca; }
+        button.main-btn:hover { background-color: #4338ca; }
 
         .word-container {
             display: flex;
@@ -67,7 +86,6 @@
             flex-wrap: wrap;
         }
 
-        /* Clean scratch box: reveals letter normally without red lines */
         .letter-box {
             font-size: 36px;
             font-weight: bold;
@@ -112,22 +130,32 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="main-container">
+        <!-- Global Exit Button (Appears on screens past setup) -->
+        <button id="exit-btn" class="exit-btn hidden" onclick="resetToHome()">🚪 Exit</button>
+
         <h1>Scratch Word Game</h1>
         <p>Two-player live guessing challenge</p>
 
-        <!-- Phase 1: Player Names & Setup Screen -->
+        <!-- Phase 1: Game Setup (Number of Players & Names) -->
         <div id="setup-names-screen">
             <h3>Game Setup</h3>
+            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Number of Players:</label>
+            <select id="num-players" disabled>
+                <option value="2" selected>2 Players</option>
+            </select><br>
+            
             <input type="text" id="p1-name" placeholder="Player 1 Name (Word Maker)"><br>
             <input type="text" id="p2-name" placeholder="Player 2 Name (Guesser)"><br>
-            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Select Total Tries for Player 2:</label>
+
+            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Total Tries for Guesser:</label>
             <select id="max-tries-select">
                 <option value="5">5 Tries</option>
                 <option value="7" selected>7 Tries</option>
                 <option value="10">10 Tries</option>
             </select><br><br>
-            <button onclick="goToWordScreen()">Next: Enter Word</button>
+
+            <button class="main-btn" onclick="goToWordScreen()">Next: Enter Word</button>
         </div>
 
         <!-- Phase 2: Player 1 Enters Word -->
@@ -135,7 +163,7 @@
             <h3 id="p1-prompt">Player 1: Enter Secret Word</h3>
             <input type="password" id="secret-word-input" placeholder="e.g. hungry">
             <br>
-            <button onclick="startGame()">Start Game</button>
+            <button class="main-btn" onclick="startGame()">Start Game</button>
         </div>
 
         <!-- Phase 3: Player 2 Guesses -->
@@ -152,12 +180,12 @@
             <div id="guess-section">
                 <input type="text" id="letter-input" maxlength="1" placeholder="Type a letter">
                 <br>
-                <button onclick="makeGuess()">Submit Guess</button>
+                <button class="main-btn" onclick="makeGuess()">Submit Guess</button>
             </div>
 
             <div id="hint-section" class="hidden">
                 <p style="color: #f8fafc; margin-top: 15px;">⚠️ Last try remaining!</p>
-                <button onclick="requestHint()" style="background: #eab308; color: black;">Ask <span class="p1-label">Player 1</span> for Hint</button>
+                <button class="main-btn" onclick="requestHint()" style="background: #eab308; color: black;">Ask <span class="p1-label">Player 1</span> for Hint</button>
                 <div id="hint-display" class="hint-box hidden"></div>
             </div>
         </div>
@@ -166,7 +194,7 @@
         <div id="game-over-screen" class="hidden">
             <h2 id="game-result" style="font-size: 24px; margin-bottom: 10px;"></h2>
             <p id="word-reveal" style="font-size: 20px; color: #38bdf8; margin-bottom: 20px;"></p>
-            <button onclick="location.reload()">Play Again</button>
+            <button class="main-btn" onclick="resetToHome()">Play Again</button>
         </div>
     </div>
 
@@ -177,6 +205,26 @@
         let guessedLetters = [];
         let wrongGuesses = [];
         let maxTries = 7;
+
+        function resetToHome() {
+            // Reset variables
+            secretWord = "";
+            guessedLetters = [];
+            wrongGuesses = [];
+            
+            // Clear input fields
+            document.getElementById("secret-word-input").value = "";
+            document.getElementById("letter-input").value = "";
+            document.getElementById("hint-display").classList.add("hidden");
+            document.getElementById("hint-section").classList.add("hidden");
+
+            // Show setup screen, hide others and exit button
+            document.getElementById("setup-names-screen").classList.remove("hidden");
+            document.getElementById("setup-word-screen").classList.add("hidden");
+            document.getElementById("game-screen").classList.add("hidden");
+            document.getElementById("game-over-screen").classList.add("hidden");
+            document.getElementById("exit-btn").classList.add("hidden");
+        }
 
         function goToWordScreen() {
             const name1 = document.getElementById("p1-name").value.trim();
@@ -193,6 +241,7 @@
 
             document.getElementById("setup-names-screen").classList.add("hidden");
             document.getElementById("setup-word-screen").classList.remove("hidden");
+            document.getElementById("exit-btn").classList.remove("hidden"); // Show exit button
         }
 
         function startGame() {
@@ -205,6 +254,7 @@
             document.getElementById("setup-word-screen").classList.add("hidden");
             document.getElementById("game-screen").classList.remove("hidden");
             document.getElementById("tries-left").innerText = maxTries;
+            document.getElementById("wrong-letters").innerText = "None";
             buildWordBoard();
         }
 
@@ -273,6 +323,7 @@
         function endGame(won) {
             document.getElementById("game-screen").classList.add("hidden");
             document.getElementById("game-over-screen").classList.remove("hidden");
+            document.getElementById("exit-btn").classList.add("hidden"); // Hide exit on game over screen
             
             const resultText = won ? `🎉 ${p2Name} Won! All letters scratched out!` : `💀 ${p2Name} Lost! ${p1Name} wins.`;
             document.getElementById("game-result").innerText = resultText;
