@@ -143,8 +143,8 @@
             <input type="number" id="num-players" min="2" value="2" onchange="generatePlayerInputs()"><br>
             
             <div id="dynamic-player-inputs">
-                <input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)"><br>
-                <input type="text" id="p-guesser-0" placeholder="Player 2 Name (Guesser)"><br>
+                <input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)" dir="auto"><br>
+                <input type="text" id="p-guesser-0" placeholder="Player 2 Name (Guesser)" dir="auto"><br>
             </div>
 
             <label style="color: var(--muted); display: block; margin-bottom: 5px; text-align: left; margin-left: 38px;">Total Tries for Guessers:</label>
@@ -160,7 +160,7 @@
         <!-- Phase 2: Writer Enters Word -->
         <div id="setup-word-screen" class="hidden">
             <h3 id="p1-prompt">Writer: Enter Secret Word</h3>
-            <input type="password" id="secret-word-input" placeholder="e.g. hungry">
+            <input type="password" id="secret-word-input" placeholder="e.g. hungry / خواردن / مأكولات" dir="auto">
             <br>
             <button class="main-btn" onclick="startGame()">Start Game</button>
         </div>
@@ -174,10 +174,10 @@
                 <div>❌ Wrong: <span id="wrong-letters">None</span></div>
             </div>
 
-            <div class="word-container" id="word-container"></div>
+            <div class="word-container" id="word-container" dir="auto"></div>
 
             <div id="guess-section">
-                <input type="text" id="letter-input" maxlength="1" placeholder="Type a letter">
+                <input type="text" id="letter-input" maxlength="2" placeholder="Type a letter" dir="auto">
                 <br>
                 <button class="main-btn" onclick="makeGuess()">Submit Guess</button>
             </div>
@@ -192,7 +192,7 @@
         <!-- Phase 4: Game Over -->
         <div id="game-over-screen" class="hidden">
             <h2 id="game-result" style="font-size: 24px; margin-bottom: 10px;"></h2>
-            <p id="word-reveal" style="font-size: 20px; color: #38bdf8; margin-bottom: 20px;"></p>
+            <p id="word-reveal" style="font-size: 20px; color: #38bdf8; margin-bottom: 20px;" dir="auto"></p>
             <button class="main-btn" onclick="resetToHome()">Play Again</button>
         </div>
     </div>
@@ -211,10 +211,10 @@
             if (isNaN(total) || total < 2) total = 2;
 
             let container = document.getElementById("dynamic-player-inputs");
-            container.innerHTML = `<input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)"><br>`;
+            container.innerHTML = `<input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)" dir="auto"><br>`;
 
             for (let i = 0; i < total - 1; i++) {
-                container.innerHTML += `<input type="text" id="p-guesser-${i}" placeholder="Guesser ${i + 1} Name"><br>`;
+                container.innerHTML += `<input type="text" id="p-guesser-${i}" placeholder="Guesser ${i + 1} Name" dir="auto"><br>`;
             }
         }
 
@@ -262,9 +262,12 @@
         }
 
         function startGame() {
-            const input = document.getElementById("secret-word-input").value.toLowerCase().trim();
-            if (!input.match(/^[a-z]+$/)) {
-                alert("Please enter a valid word using only letters (a-z).");
+            const input = document.getElementById("secret-word-input").value.trim();
+            // Regex allowing English letters and Arabic/Kurdish Unicode block (\u0600-\u06FF)
+            const validPattern = /^[\u0600-\u06FFa-zA-Z\s]+$/;
+            
+            if (!input || !validPattern.test(input)) {
+                alert("Please enter a valid word using English, Arabic, or Kurdish characters.");
                 return;
             }
             secretWord = input;
@@ -291,13 +294,13 @@
                 box.classList.add("letter-box");
                 box.innerText = char; 
                 
-                if (guessedLetters.includes(char)) {
+                if (guessedLetters.includes(char) || char === ' ') {
                     box.classList.add("revealed");
                 }
                 container.appendChild(box);
             }
 
-            const allRevealed = secretWord.split('').every(char => guessedLetters.includes(char));
+            const allRevealed = secretWord.split('').every(char => guessedLetters.includes(char) || char === ' ');
             if (allRevealed && secretWord.length > 0) {
                 endGame(true);
             } else if (wrongGuesses.length >= maxTries) {
@@ -307,10 +310,11 @@
 
         function makeGuess() {
             const inputField = document.getElementById("letter-input");
-            const letter = inputField.value.toLowerCase().trim();
+            const letter = inputField.value.trim();
             inputField.value = "";
 
-            if (!letter.match(/^[a-z]$/)) {
+            const validLetterPattern = /^[\u0600-\u06FFa-zA-Z]$/;
+            if (!letter || !validLetterPattern.test(letter)) {
                 alert("Please enter a single valid letter.");
                 return;
             }
@@ -330,7 +334,6 @@
 
             buildWordBoard();
 
-            // Cycle to the next guesser if there are multiple guessers
             if (guesserNames.length > 1 && wrongGuesses.length < maxTries) {
                 currentGuesserIndex = (currentGuesserIndex + 1) % guesserNames.length;
                 updateTurnText();
@@ -352,13 +355,12 @@
 
         function endGame(won) {
             document.getElementById("game-screen").classList.add("hidden");
-            document.getElementById("game-over-screen").classList.add("hidden"); // Handled below
             document.getElementById("game-over-screen").classList.remove("hidden");
             document.getElementById("exit-btn").classList.add("hidden");
             
             const resultText = won ? `🎉 Guessers Won! All letters scratched out!` : `💀 Guessers Lost! ${writerName} (Writer) wins.`;
             document.getElementById("game-result").innerText = resultText;
-            document.getElementById("word-reveal").innerText = `The secret word was: "${secretWord.toUpperCase()}"`;
+            document.getElementById("word-reveal").innerText = `The secret word was: "${secretWord}"`;
         }
     </script>
 </body>
