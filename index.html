@@ -34,14 +34,14 @@
         h1 { margin-bottom: 5px; color: #818cf8; }
         p { color: var(--muted); }
 
-        input {
+        input, select {
             padding: 12px 16px;
-            font-size: 18px;
+            font-size: 16px;
             border-radius: 8px;
             border: 1px solid #475569;
             background: #0f172a;
             color: white;
-            width: 70%;
+            width: 80%;
             margin-bottom: 15px;
         }
 
@@ -59,7 +59,6 @@
 
         button:hover { background-color: #4338ca; }
 
-        /* The scratch-out word display style */
         .word-container {
             display: flex;
             justify-content: center;
@@ -68,6 +67,7 @@
             flex-wrap: wrap;
         }
 
+        /* Clean scratch box: reveals letter normally without red lines */
         .letter-box {
             font-size: 36px;
             font-weight: bold;
@@ -78,19 +78,14 @@
             justify-content: center;
             background: #334155;
             border-radius: 8px;
-            position: relative;
-            color: transparent; /* Hidden by default */
+            color: transparent; 
             transition: all 0.3s ease;
         }
 
-        /* When letter is guessed, it reveals AND gets scratched out horizontally */
         .letter-box.revealed {
             color: #f8fafc;
-            text-decoration: line-through;
-            text-decoration-color: #ef4444; /* Red scratch line */
-            text-decoration-thickness: 4px;
             background: #0f172a;
-            border: 2px dashed #475569;
+            border: 2px solid #475569;
         }
 
         .stats {
@@ -119,26 +114,39 @@
 
     <div class="container">
         <h1>Scratch Word Game</h1>
-        <p>Guess the letters before your tries run out!</p>
+        <p>Two-player live guessing challenge</p>
 
-        <!-- Phase 1: Player 1 Enters Word -->
-        <div id="setup-screen">
-            <h3>Player 1: Enter Secret Word</h3>
+        <!-- Phase 1: Player Names & Setup Screen -->
+        <div id="setup-names-screen">
+            <h3>Game Setup</h3>
+            <input type="text" id="p1-name" placeholder="Player 1 Name (Word Maker)"><br>
+            <input type="text" id="p2-name" placeholder="Player 2 Name (Guesser)"><br>
+            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Select Total Tries for Player 2:</label>
+            <select id="max-tries-select">
+                <option value="5">5 Tries</option>
+                <option value="7" selected>7 Tries</option>
+                <option value="10">10 Tries</option>
+            </select><br><br>
+            <button onclick="goToWordScreen()">Next: Enter Word</button>
+        </div>
+
+        <!-- Phase 2: Player 1 Enters Word -->
+        <div id="setup-word-screen" class="hidden">
+            <h3 id="p1-prompt">Player 1: Enter Secret Word</h3>
             <input type="password" id="secret-word-input" placeholder="e.g. hungry">
             <br>
             <button onclick="startGame()">Start Game</button>
         </div>
 
-        <!-- Phase 2: Player 2 Guesses -->
+        <!-- Phase 3: Player 2 Guesses -->
         <div id="game-screen" class="hidden">
-            <h3>Player 2: Guess a Letter</h3>
+            <h3 id="p2-prompt">Player 2: Guess a Letter</h3>
             
             <div class="stats">
                 <div>❤️ Tries Left: <span id="tries-left" style="color: #ef4444; font-weight: bold;">7</span></div>
                 <div>❌ Wrong: <span id="wrong-letters">None</span></div>
             </div>
 
-            <!-- The word display where letters get revealed and scratched out -->
             <div class="word-container" id="word-container"></div>
 
             <div id="guess-section">
@@ -149,23 +157,43 @@
 
             <div id="hint-section" class="hidden">
                 <p style="color: #f8fafc; margin-top: 15px;">⚠️ Last try remaining!</p>
-                <button onclick="requestHint()" style="background: #eab308; color: black;">Ask Player 1 for Hint</button>
+                <button onclick="requestHint()" style="background: #eab308; color: black;">Ask <span class="p1-label">Player 1</span> for Hint</button>
                 <div id="hint-display" class="hint-box hidden"></div>
             </div>
         </div>
 
-        <!-- Phase 3: Game Over -->
+        <!-- Phase 4: Game Over -->
         <div id="game-over-screen" class="hidden">
-            <h2 id="game-result" style="font-size: 28px; margin-bottom: 20px;"></h2>
+            <h2 id="game-result" style="font-size: 24px; margin-bottom: 10px;"></h2>
+            <p id="word-reveal" style="font-size: 20px; color: #38bdf8; margin-bottom: 20px;"></p>
             <button onclick="location.reload()">Play Again</button>
         </div>
     </div>
 
     <script>
+        let p1Name = "Player 1";
+        let p2Name = "Player 2";
         let secretWord = "";
         let guessedLetters = [];
         let wrongGuesses = [];
-        const maxTries = 7;
+        let maxTries = 7;
+
+        function goToWordScreen() {
+            const name1 = document.getElementById("p1-name").value.trim();
+            const name2 = document.getElementById("p2-name").value.trim();
+            
+            if (name1) p1Name = name1;
+            if (name2) p2Name = name2;
+
+            maxTries = parseInt(document.getElementById("max-tries-select").value);
+
+            document.getElementById("p1-prompt").innerText = `${p1Name}: Enter Secret Word`;
+            document.getElementById("p2-prompt").innerText = `${p2Name}: Guess a Letter`;
+            document.querySelectorAll(".p1-label").forEach(el => el.innerText = p1Name);
+
+            document.getElementById("setup-names-screen").classList.add("hidden");
+            document.getElementById("setup-word-screen").classList.remove("hidden");
+        }
 
         function startGame() {
             const input = document.getElementById("secret-word-input").value.toLowerCase().trim();
@@ -174,8 +202,9 @@
                 return;
             }
             secretWord = input;
-            document.getElementById("setup-screen").classList.add("hidden");
+            document.getElementById("setup-word-screen").classList.add("hidden");
             document.getElementById("game-screen").classList.remove("hidden");
+            document.getElementById("tries-left").innerText = maxTries;
             buildWordBoard();
         }
 
@@ -186,7 +215,7 @@
             for (let char of secretWord) {
                 const box = document.createElement("div");
                 box.classList.add("letter-box");
-                box.innerText = char; // Stores the letter inside invisibly
+                box.innerText = char; 
                 
                 if (guessedLetters.includes(char)) {
                     box.classList.add("revealed");
@@ -194,7 +223,6 @@
                 container.appendChild(box);
             }
 
-            // Check win condition
             const allRevealed = secretWord.split('').every(char => guessedLetters.includes(char));
             if (allRevealed && secretWord.length > 0) {
                 endGame(true);
@@ -228,14 +256,13 @@
 
             buildWordBoard();
 
-            // Trigger hint area on the last try
             if (wrongGuesses.length === maxTries - 1) {
                 document.getElementById("hint-section").classList.remove("hidden");
             }
         }
 
         function requestHint() {
-            let hint = prompt("Player 1: Enter a helpful hint for Player 2:");
+            let hint = prompt(`${p1Name}: Enter a helpful hint for ${p2Name}:`);
             if (hint) {
                 const hintBox = document.getElementById("hint-display");
                 hintBox.innerText = "Hint: " + hint;
@@ -246,8 +273,10 @@
         function endGame(won) {
             document.getElementById("game-screen").classList.add("hidden");
             document.getElementById("game-over-screen").classList.remove("hidden");
-            const resultText = won ? "🎉 Player 2 Won! All letters scratched out!" : "💀 Player 2 Lost! Player 1's word stays hidden.";
+            
+            const resultText = won ? `🎉 ${p2Name} Won! All letters scratched out!` : `💀 ${p2Name} Lost! ${p1Name} wins.`;
             document.getElementById("game-result").innerText = resultText;
+            document.getElementById("word-reveal").innerText = `The secret word was: "${secretWord.toUpperCase()}"`;
         }
     </script>
 </body>
