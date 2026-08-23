@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2-Player Scratch Word Game</title>
+    <title>Multiplayer Scratch Word Game</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -32,7 +32,6 @@
             position: relative;
         }
 
-        /* Top-Left Exit Button */
         .exit-btn {
             position: absolute;
             top: 20px;
@@ -131,25 +130,24 @@
 <body>
 
     <div class="container" id="main-container">
-        <!-- Global Exit Button -->
         <button id="exit-btn" class="exit-btn hidden" onclick="resetToHome()">🚪 Exit</button>
 
         <h1>Scratch Word Game</h1>
-        <p>Two-player live guessing challenge</p>
+        <p>Live word-guessing challenge</p>
 
-        <!-- Phase 1: Game Setup -->
+        <!-- Phase 1: Setup Game & Players -->
         <div id="setup-names-screen">
             <h3>Game Setup</h3>
-            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Number of Players:</label>
-            <select id="num-players">
-                <option value="2" selected>2 Players</option>
-                <option value="3">3 Players (Coming Soon)</option>
-            </select><br>
             
-            <input type="text" id="p1-name" placeholder="Player 1 Name (Word Maker)"><br>
-            <input type="text" id="p2-name" placeholder="Player 2 Name (Guesser)"><br>
+            <label style="color: var(--muted); display: block; margin-bottom: 5px; text-align: left; margin-left: 38px;">Total Players (Min 2):</label>
+            <input type="number" id="num-players" min="2" value="2" onchange="generatePlayerInputs()"><br>
+            
+            <div id="dynamic-player-inputs">
+                <input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)"><br>
+                <input type="text" id="p-guesser-0" placeholder="Player 2 Name (Guesser)"><br>
+            </div>
 
-            <label style="color: var(--muted); display: block; margin-bottom: 5px;">Total Tries for Guesser:</label>
+            <label style="color: var(--muted); display: block; margin-bottom: 5px; text-align: left; margin-left: 38px;">Total Tries for Guessers:</label>
             <select id="max-tries-select">
                 <option value="5">5 Tries</option>
                 <option value="7" selected>7 Tries</option>
@@ -159,17 +157,17 @@
             <button class="main-btn" onclick="goToWordScreen()">Next: Enter Word</button>
         </div>
 
-        <!-- Phase 2: Player 1 Enters Word -->
+        <!-- Phase 2: Writer Enters Word -->
         <div id="setup-word-screen" class="hidden">
-            <h3 id="p1-prompt">Player 1: Enter Secret Word</h3>
+            <h3 id="p1-prompt">Writer: Enter Secret Word</h3>
             <input type="password" id="secret-word-input" placeholder="e.g. hungry">
             <br>
             <button class="main-btn" onclick="startGame()">Start Game</button>
         </div>
 
-        <!-- Phase 3: Player 2 Guesses -->
+        <!-- Phase 3: Guessers' Turn -->
         <div id="game-screen" class="hidden">
-            <h3 id="p2-prompt">Player 2: Guess a Letter</h3>
+            <h3 id="current-guesser-turn">Guesser's Turn</h3>
             
             <div class="stats">
                 <div>❤️ Tries Left: <span id="tries-left" style="color: #ef4444; font-weight: bold;">7</span></div>
@@ -186,7 +184,7 @@
 
             <div id="hint-section" class="hidden">
                 <p style="color: #f8fafc; margin-top: 15px;">⚠️ Last try remaining!</p>
-                <button class="main-btn" onclick="requestHint()" style="background: #eab308; color: black;">Ask <span class="p1-label">Player 1</span> for Hint</button>
+                <button class="main-btn" onclick="requestHint()" style="background: #eab308; color: black;">Ask Writer for Hint</button>
                 <div id="hint-display" class="hint-box hidden"></div>
             </div>
         </div>
@@ -200,17 +198,31 @@
     </div>
 
     <script>
-        let p1Name = "Player 1";
-        let p2Name = "Player 2";
+        let writerName = "Player 1";
+        let guesserNames = [];
+        let currentGuesserIndex = 0;
         let secretWord = "";
         let guessedLetters = [];
         let wrongGuesses = [];
         let maxTries = 7;
 
+        function generatePlayerInputs() {
+            let total = parseInt(document.getElementById("num-players").value);
+            if (isNaN(total) || total < 2) total = 2;
+
+            let container = document.getElementById("dynamic-player-inputs");
+            container.innerHTML = `<input type="text" id="p-writer" placeholder="Player 1 Name (Word Maker - Writer)"><br>`;
+
+            for (let i = 0; i < total - 1; i++) {
+                container.innerHTML += `<input type="text" id="p-guesser-${i}" placeholder="Guesser ${i + 1} Name"><br>`;
+            }
+        }
+
         function resetToHome() {
             secretWord = "";
             guessedLetters = [];
             wrongGuesses = [];
+            currentGuesserIndex = 0;
             
             document.getElementById("secret-word-input").value = "";
             document.getElementById("letter-input").value = "";
@@ -225,23 +237,24 @@
         }
 
         function goToWordScreen() {
-            const numPlayers = document.getElementById("num-players").value;
-            if (numPlayers !== "2") {
-                alert("Currently, this layout supports 2 players. More player slots coming soon!");
+            let total = parseInt(document.getElementById("num-players").value);
+            if (isNaN(total) || total < 2) {
+                alert("Please select at least 2 players.");
                 return;
             }
 
-            const name1 = document.getElementById("p1-name").value.trim();
-            const name2 = document.getElementById("p2-name").value.trim();
-            
-            if (name1) p1Name = name1;
-            if (name2) p2Name = name2;
+            const wInput = document.getElementById("p-writer").value.trim();
+            if (wInput) writerName = wInput;
+
+            guesserNames = [];
+            for (let i = 0; i < total - 1; i++) {
+                let gInput = document.getElementById(`p-guesser-${i}`).value.trim();
+                guesserNames.push(gInput || `Guesser ${i + 1}`);
+            }
 
             maxTries = parseInt(document.getElementById("max-tries-select").value);
 
-            document.getElementById("p1-prompt").innerText = `${p1Name}: Enter Secret Word`;
-            document.getElementById("p2-prompt").innerText = `${p2Name}: Guess a Letter`;
-            document.querySelectorAll(".p1-label").forEach(el => el.innerText = p1Name);
+            document.getElementById("p1-prompt").innerText = `${writerName} (Writer): Enter Secret Word`;
 
             document.getElementById("setup-names-screen").classList.add("hidden");
             document.getElementById("setup-word-screen").classList.remove("hidden");
@@ -255,11 +268,18 @@
                 return;
             }
             secretWord = input;
+            currentGuesserIndex = 0;
             document.getElementById("setup-word-screen").classList.add("hidden");
             document.getElementById("game-screen").classList.remove("hidden");
             document.getElementById("tries-left").innerText = maxTries;
             document.getElementById("wrong-letters").innerText = "None";
+            updateTurnText();
             buildWordBoard();
+        }
+
+        function updateTurnText() {
+            let currentGuesser = guesserNames[currentGuesserIndex];
+            document.getElementById("current-guesser-turn").innerText = `${currentGuesser}'s Turn to Guess`;
         }
 
         function buildWordBoard() {
@@ -310,13 +330,19 @@
 
             buildWordBoard();
 
+            // Cycle to the next guesser if there are multiple guessers
+            if (guesserNames.length > 1 && wrongGuesses.length < maxTries) {
+                currentGuesserIndex = (currentGuesserIndex + 1) % guesserNames.length;
+                updateTurnText();
+            }
+
             if (wrongGuesses.length === maxTries - 1) {
                 document.getElementById("hint-section").classList.remove("hidden");
             }
         }
 
         function requestHint() {
-            let hint = prompt(`${p1Name}: Enter a helpful hint for ${p2Name}:`);
+            let hint = prompt(`${writerName} (Writer): Enter a helpful hint for the guessers:`);
             if (hint) {
                 const hintBox = document.getElementById("hint-display");
                 hintBox.innerText = "Hint: " + hint;
@@ -326,10 +352,11 @@
 
         function endGame(won) {
             document.getElementById("game-screen").classList.add("hidden");
+            document.getElementById("game-over-screen").classList.add("hidden"); // Handled below
             document.getElementById("game-over-screen").classList.remove("hidden");
             document.getElementById("exit-btn").classList.add("hidden");
             
-            const resultText = won ? `🎉 ${p2Name} Won! All letters scratched out!` : `💀 ${p2Name} Lost! ${p1Name} wins.`;
+            const resultText = won ? `🎉 Guessers Won! All letters scratched out!` : `💀 Guessers Lost! ${writerName} (Writer) wins.`;
             document.getElementById("game-result").innerText = resultText;
             document.getElementById("word-reveal").innerText = `The secret word was: "${secretWord.toUpperCase()}"`;
         }
