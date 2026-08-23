@@ -157,10 +157,10 @@
             <button class="main-btn" onclick="goToWordScreen()">Next: Enter Word</button>
         </div>
 
-        <!-- Phase 2: Writer Enters Word -->
+        <!-- Phase 2: Writer Enters Word (Visible text input now) -->
         <div id="setup-word-screen" class="hidden">
             <h3 id="p1-prompt">Writer: Enter Secret Word</h3>
-            <input type="password" id="secret-word-input" placeholder="e.g. hungry / خواردن / مأكولات" dir="auto">
+            <input type="text" id="secret-word-input" placeholder="e.g. hungry / خواردن / مأكولات" dir="auto">
             <br>
             <button class="main-btn" onclick="startGame()">Start Game</button>
         </div>
@@ -263,7 +263,6 @@
 
         function startGame() {
             const input = document.getElementById("secret-word-input").value.trim();
-            // Regex allowing English letters and Arabic/Kurdish Unicode block (\u0600-\u06FF)
             const validPattern = /^[\u0600-\u06FFa-zA-Z\s]+$/;
             
             if (!input || !validPattern.test(input)) {
