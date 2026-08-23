@@ -1,447 +1,254 @@
 <!DOCTYPE html>
-<html lang="ckb" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بژمێرا یاریا دومینێ</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        // Core Dark Mode Palette
-                        'app-bg': '#0f172a',    // Deep Navy (Slate 900)
-                        'card-bg': '#1e293b',   // Slightly lighter card background (Slate 800)
-                        'primary': '#3b82f6',   // Bright Blue for primary actions (Blue 500)
-                        'primary-hover': '#2563eb', // Darker Blue on hover
-                        'text-light': '#f8fafc', // White text (Slate 50)
-                        'text-muted': '#94a3b8', // Gray text for subtle labels (Slate 400)
-                    }
-                }
-            },
-            safelist: [
-                'bg-primary', 'hover:bg-primary-hover', 'ring-primary/50',
-                'color-indigo', 'color-purple', 'color-teal', 'color-rose', 'color-orange', 'color-lime',
-                'text-indigo-400', 'text-purple-400', 'text-teal-400', 'text-rose-400', 'text-orange-400', 'text-lime-400',
-                'text-indigo-200', 'text-purple-200', 'text-teal-200', 'text-rose-200', 'text-orange-200', 'text-lime-200',
-                'bg-indigo-600', 'bg-purple-600', 'bg-teal-600', 'bg-rose-600', 'bg-orange-600', 'bg-lime-600',
-                'hover:bg-indigo-700', 'hover:bg-purple-700', 'hover:bg-teal-700', 'hover:bg-rose-700', 'hover:bg-orange-700', 'hover:bg-lime-700',
-                'ring-indigo-300', 'ring-purple-300', 'ring-teal-300', 'ring-rose-300', 'ring-orange-300', 'ring-lime-300',
-            ]
-        }
-    </script>
-
+    <title>2-Player Scratch Word Game</title>
     <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            text-align: center;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 { margin-bottom: 5px; color: #818cf8; }
+        p { color: var(--muted); }
+
+        input {
+            padding: 12px 16px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            width: 70%;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #4338ca; }
+
+        /* The scratch-out word display style */
+        .word-container {
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
-        
-        #app {
-            background-color: #1e293b !important; 
-            color: var(--text-light);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 5px 10px -5px rgba(0, 0, 0, 0.2);
+            gap: 12px;
+            margin: 30px 0;
+            flex-wrap: wrap;
         }
 
-        .score-button, .action-button {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            user-select: none;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+        .letter-box {
+            font-size: 36px;
+            font-weight: bold;
+            width: 50px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #334155;
+            border-radius: 8px;
+            position: relative;
+            color: transparent; /* Hidden by default */
+            transition: all 0.3s ease;
         }
-        .score-button:active, .action-button:active {
-            transform: scale(0.98);
-        }
-        /* Style for disabled button, kept subtle but visible */
-        .action-button:disabled {
-            opacity: 0.7; /* Increased opacity for better visibility */
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); /* Reduced shadow for disabled state */
-            background-color: #16a34a !important; /* Keep the green color, just change opacity */
-        }
-        
-        .color-indigo { border-top-color: #6366f1; background-color: #313c54; }
-        .color-purple { border-top-color: #a855f7; background-color: #3b3156; }
-        .color-teal { border-top-color: #2dd4bf; background-color: #2f454f; }
-        .color-rose { border-top-color: #f472b6; background-color: #553142; }
-        .color-orange { border-top-color: #fb923c; background-color: #554431; }
-        .color-lime { border-top-color: #a3e635; background-color: #4a5431; }
-        
-        .mode-hidden { display: none; }
 
-        #new-team-name {
-            text-align: right;
+        /* When letter is guessed, it reveals AND gets scratched out horizontally */
+        .letter-box.revealed {
+            color: #f8fafc;
+            text-decoration: line-through;
+            text-decoration-color: #ef4444; /* Red scratch line */
+            text-decoration-thickness: 4px;
+            background: #0f172a;
+            border: 2px dashed #475569;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        .hidden { display: none; }
+        
+        .hint-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #334155;
+            border-radius: 6px;
+            color: #facc15;
+            font-weight: bold;
         }
     </style>
 </head>
-<body class="bg-app-bg">
+<body>
 
-    <div id="app" class="w-full max-w-4xl p-8 rounded-3xl mt-8">
-        
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-text-light tracking-tight">
-                <span class="text-primary mr-1">◆</span> بژمێرا یاریا دومینێ
-            </h1>
-        </header>
-        
-      
-        <div id="score-display-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            </div>
+    <div class="container">
+        <h1>Scratch Word Game</h1>
+        <p>Guess the letters before your tries run out!</p>
 
-        <div id="setup-mode">
-            <div class="mb-10 p-6 bg-app-bg rounded-2xl border border-card-bg">
-              
-                
-                <div class="flex flex-col sm:flex-row gap-4 mb-5">
-                    <input type="text" id="new-team-name" placeholder="ناڤێ تیمێ بنڤیسە"
-                            class="flex-grow p-4 border-2 border-card-bg bg-app-bg text-text-light rounded-xl focus:ring-4 focus:ring-primary/50 focus:border-primary transition duration-200 ease-in-out placeholder-text-muted" />
-                    <button id="add-team-button" class="action-button bg-primary hover:bg-primary-hover text-white font-bold py-4 px-8 rounded-xl transition shadow-lg whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-0.5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                        زێدەکرنا تیمێ
-                    </button>
-                </div>
-                
-                <button id="start-game-button" 
-                        class="action-button w-full bg-green-600 hover:bg-green-700 text-white font-extrabold py-5 rounded-xl transition shadow-xl text-xl uppercase tracking-wider focus:ring-4 focus:ring-green-300"
-                        onclick="handleStartGameAttempt()">
-                    دەستپێکرنا یاریێ!
-                </button>
-            </div>
+        <!-- Phase 1: Player 1 Enters Word -->
+        <div id="setup-screen">
+            <h3>Player 1: Enter Secret Word</h3>
+            <input type="password" id="secret-word-input" placeholder="e.g. hungry">
+            <br>
+            <button onclick="startGame()">Start Game</button>
         </div>
-        
-        <div id="game-mode" class="mode-hidden">
+
+        <!-- Phase 2: Player 2 Guesses -->
+        <div id="game-screen" class="hidden">
+            <h3>Player 2: Guess a Letter</h3>
             
-            <div class="mb-8">
-                
-                <h2 class="text-xl font-bold text-text-light mb-3">١. خالێن تومارکری دیاربکە</h2>
-                <div id="value-buttons" class="grid grid-cols-4 md:grid-cols-7 gap-3">
-                    </div>
-                
-                </div>
+            <div class="stats">
+                <div>❤️ Tries Left: <span id="tries-left" style="color: #ef4444; font-weight: bold;">7</span></div>
+                <div>❌ Wrong: <span id="wrong-letters">None</span></div>
+            </div>
 
-            <h2 class="text-xl font-bold text-text-light mb-3">٢. خالێ بدە تیمێ</h2>
-            <div id="team-assignment-buttons" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
-                </div>
+            <!-- The word display where letters get revealed and scratched out -->
+            <div class="word-container" id="word-container"></div>
 
-            <div class="mt-8 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between gap-4">
-                <button id="undo-button" disabled class="action-button w-full sm:w-1/2 bg-slate-700 hover:bg-slate-600 text-text-light font-semibold py-4 rounded-xl transition duration-150 ease-in-out shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a4 4 0 014 4v2a2 2 0 002 2h0m-7-2l-2-2m-2-2l2 2" /></svg>
-                    پێنگاڤەکێ بزڤرە
-                </button>
-                <button id="reset-button" class="action-button w-full sm:w-1/2 bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-xl transition duration-150 ease-in-out shadow-lg focus:ring-4 focus:ring-red-300">
-                    دوبارە یاریێ دەستپێبکە
-                </button>
+            <div id="guess-section">
+                <input type="text" id="letter-input" maxlength="1" placeholder="Type a letter">
+                <br>
+                <button onclick="makeGuess()">Submit Guess</button>
+            </div>
+
+            <div id="hint-section" class="hidden">
+                <p style="color: #f8fafc; margin-top: 15px;">⚠️ Last try remaining!</p>
+                <button onclick="requestHint()" style="background: #eab308; color: black;">Ask Player 1 for Hint</button>
+                <div id="hint-display" class="hint-box hidden"></div>
             </div>
         </div>
 
-        
-        <div id="confirmation-box" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden" onclick="cancelAction()">
-            <div class="bg-card-bg p-8 rounded-2xl shadow-2xl w-11/12 max-w-md text-center" onclick="event.stopPropagation()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500 mx-auto mb-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                <p id="confirmation-text" class="text-xl font-semibold text-text-light mb-6">تو یێ پشت راستی؟</p>
-                <div class="flex justify-around gap-4">
-                    <button id="confirm-yes" class="action-button bg-red-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-700 transition w-full shadow-lg">بەلێ</button>
-                    <button id="confirm-no" onclick="cancelAction()" class="action-button bg-slate-700 text-text-light font-semibold px-6 py-3 rounded-xl hover:bg-slate-600 transition w-full">نەخێر، زڤرینەڤە بو ناڤ یاریێ</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="message-box" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden" onclick="hideMessage()">
-            <div class="bg-card-bg p-8 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center" onclick="event.stopPropagation()">
-                <p id="message-text" class="text-lg font-semibold text-text-light mb-5"></p>
-                <button onclick="hideMessage()" class="action-button bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover transition w-full">باشە</button>
-            </div>
+        <!-- Phase 3: Game Over -->
+        <div id="game-over-screen" class="hidden">
+            <h2 id="game-result" style="font-size: 28px; margin-bottom: 20px;"></h2>
+            <button onclick="location.reload()">Play Again</button>
         </div>
     </div>
 
     <script>
-        // --- State Management ---
-        const colorCycle = ['indigo', 'purple', 'teal', 'rose', 'orange', 'lime'];
-        
-        const state = {
-            teams: {},
-            selectedValue: 0,
-            history: [],
-            nextTeamId: 1,
-            isGameActive: false
-        };
+        let secretWord = "";
+        let guessedLetters = [];
+        let wrongGuesses = [];
+        const maxTries = 7;
 
-        let pendingConfirmationCallback = null; 
-        const scoreValues = [5, 10, 15, 20, 25, 30, 35];
-        const elements = {
-            // REMOVED: selectedValueDisplay: document.getElementById('selected-value-display'),
-            valueButtonsContainer: document.getElementById('value-buttons'),
-            scoreDisplayContainer: document.getElementById('score-display-container'),
-            teamAssignmentButtons: document.getElementById('team-assignment-buttons'),
-            undoButton: document.getElementById('undo-button'),
-            resetButton: document.getElementById('reset-button'),
-            setupMode: document.getElementById('setup-mode'),
-            gameMode: document.getElementById('game-mode'),
-            startButton: document.getElementById('start-game-button'),
-            messageBox: document.getElementById('message-box'),
-            messageText: document.getElementById('message-text'),
-            confirmationBox: document.getElementById('confirmation-box'),
-            confirmationText: document.getElementById('confirmation-text'),
-            confirmYesButton: document.getElementById('confirm-yes'),
-            newTeamNameInput: document.getElementById('new-team-name'),
-            addTeamButton: document.getElementById('add-team-button'),
-        };
-
-        // --- Modal Functions (UNCHANGED) ---
-        function showMessage(text) { elements.messageText.textContent = text; elements.messageBox.style.display = 'flex'; }
-        function hideMessage() { elements.messageBox.style.display = 'none'; }
-        function showConfirmation(text, callback) { elements.confirmationText.textContent = text; elements.confirmationBox.style.display = 'flex'; pendingConfirmationCallback = callback; }
-        function confirmAction() { if (pendingConfirmationCallback) { pendingConfirmationCallback(); } elements.confirmationBox.style.display = 'none'; pendingConfirmationCallback = null; }
-        function cancelAction() { elements.confirmationBox.style.display = 'none'; pendingConfirmationCallback = null; }
-
-        // --- Utility Functions (UNCHANGED) ---
-        function createTeam(name) {
-            const teamId = 't' + state.nextTeamId++;
-            const color = colorCycle[(state.nextTeamId - 2) % colorCycle.length];
-            state.teams[teamId] = { id: teamId, name: name || `Team ${state.nextTeamId - 1}`, score: 0, color: color };
-        }
-        function getButtonClass(value, isActive) {
-            const baseClass = 'score-button text-xl font-bold p-3 rounded-lg w-full';
-            if (isActive) { return `${baseClass} bg-primary text-white shadow-lg ring-4 ring-blue-300/50`; } 
-            else { return `${baseClass} bg-app-bg text-text-light border border-slate-700 hover:bg-slate-700`; }
+        function startGame() {
+            const input = document.getElementById("secret-word-input").value.toLowerCase().trim();
+            if (!input.match(/^[a-z]+$/)) {
+                alert("Please enter a valid word using only letters (a-z).");
+                return;
+            }
+            secretWord = input;
+            document.getElementById("setup-screen").classList.add("hidden");
+            document.getElementById("game-screen").classList.remove("hidden");
+            buildWordBoard();
         }
 
-        // --- Rendering Functions (Modified render and renderScoreCards) ---
-        function renderScoreCards() {
-            elements.scoreDisplayContainer.innerHTML = '';
-            Object.values(state.teams).forEach(team => {
-                const card = document.createElement('div');
-                card.className = `p-5 color-${team.color} border-t-4 rounded-xl shadow-lg flex flex-col justify-between transition duration-300`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start w-full">
-                         <p class="text-sm font-semibold uppercase tracking-wider text-${team.color}-400">${team.name}</p>
-                         <button data-team-id="${team.id}" class="remove-team-btn text-text-muted hover:text-red-500 text-xs font-medium transition p-1 rounded-full hover:bg-card-bg" title="لابردنی تیپ">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                         </button>
-                    </div>
-                    <p id="score-${team.id}" class="text-6xl font-extrabold text-${team.color}-200 mt-2 text-center transition-transform duration-300">${team.score}</p>
-                `;
-                elements.scoreDisplayContainer.appendChild(card);
-            });
+        function buildWordBoard() {
+            const container = document.getElementById("word-container");
+            container.innerHTML = "";
 
-            document.querySelectorAll('.remove-team-btn').forEach(btn => {
-                if (state.isGameActive) {
-                    btn.style.visibility = 'hidden';
-                    btn.removeEventListener('click', handleRemoveTeam);
-                } else {
-                    btn.style.visibility = 'visible';
-                    btn.addEventListener('click', handleRemoveTeam);
-                }
-            });
-
-            elements.startButton.disabled = Object.keys(state.teams).length === 0;
-        }
-
-        function renderAssignmentButtons() {
-            elements.teamAssignmentButtons.innerHTML = '';
-            Object.values(state.teams).forEach(team => {
-                const button = document.createElement('button');
-                button.id = `add-${team.id}`;
-                button.dataset.teamId = team.id;
-                button.className = `action-button bg-${team.color}-600 hover:bg-${team.color}-700 text-white font-bold py-4 rounded-xl transition duration-150 ease-in-out text-base focus:outline-none focus:ring-4 ring-${team.color}-300 shadow-lg`;
-                button.textContent = `+${state.selectedValue} بۆ ${team.name}`;
-                button.disabled = state.selectedValue === 0;
+            for (let char of secretWord) {
+                const box = document.createElement("div");
+                box.classList.add("letter-box");
+                box.innerText = char; // Stores the letter inside invisibly
                 
-                button.addEventListener('click', (e) => handleTeamScoring(e.currentTarget.dataset.teamId));
-                elements.teamAssignmentButtons.appendChild(button);
-            });
-        }
-
-        function render() {
-            if (state.isGameActive) {
-                elements.setupMode.classList.add('mode-hidden');
-                elements.gameMode.classList.remove('mode-hidden');
-                elements.resetButton.textContent = 'دوبارە یاریێ دەستپێبکە';
-            } else {
-                elements.setupMode.classList.remove('mode-hidden');
-                elements.gameMode.classList.add('mode-hidden');
-                elements.resetButton.textContent = 'ژێبرنا هەمی تیمان';
-            }
-
-            renderScoreCards();
-            renderAssignmentButtons();
-            
-            // LOGIC CHANGE: We no longer update a dedicated display element for selected value.
-            // We just ensure the buttons reflect the state.
-
-            document.querySelectorAll('.score-button').forEach(btn => {
-                const value = parseInt(btn.dataset.value);
-                btn.className = getButtonClass(value, value === state.selectedValue);
-            });
-            
-            elements.undoButton.disabled = state.history.length === 0;
-            if (state.history.length > 0) {
-                const lastMove = state.history[state.history.length - 1];
-                const teamName = state.teams[lastMove.teamId] ? state.teams[lastMove.teamId].name : 'تیما ژێچووی';
-                elements.undoButton.textContent = ` ${lastMove.value} خالان بزڤرینەڤە`;
-            } else {
-                elements.undoButton.textContent = 'هێشتا چ خال تومار نەکرینە';
-            }
-        }
-        
-        // --- Event Handlers ---
-        function handleStartGameAttempt() {
-            if (Object.keys(state.teams).length < 1) {
-                showMessage("ناڤێ تیمان بنڤیسە.");
-                return;
-            }
-            handleStartGame();
-        }
-
-        function handleStartGame() {
-            state.isGameActive = true;
-            render();
-        }
-
-        function handleValueSelection(event) {
-            const newValue = parseInt(event.currentTarget.dataset.value);
-            // Toggle logic remains the same
-            state.selectedValue = state.selectedValue === newValue ? 0 : newValue; 
-            render();
-        }
-
-        function handleTeamScoring(teamId) {
-            if (state.selectedValue === 0) {
-                showMessage("ل دەستپێکێ بهایێ خالان دیاربکە!.");
-                return;
-            }
-
-            state.teams[teamId].score += state.selectedValue;
-            state.history.push({ teamId: teamId, value: state.selectedValue });
-            state.selectedValue = 0; // Reset selected value after scoring
-            render();
-        }
-
-        function handleAddTeam() {
-            const name = elements.newTeamNameInput.value.trim();
-            if (Object.keys(state.teams).length >= 6) {
-                 showMessage("گەهشتە زورترین ژمارا پێشنیار کری.");
-                 return;
-            }
-            if (name.length < 1 || name.length > 20) {
-                showMessage("ناڤێ تیمان بنڤیسە.");
-                return;
-            }
-            
-            const isDuplicate = Object.values(state.teams).some(team => team.name.toLowerCase() === name.toLowerCase());
-            if (isDuplicate) {
-                showMessage(`تیمەک ب ناڤێ "${name}" یا هەی.`);
-                return;
-            }
-
-            createTeam(name);
-            elements.newTeamNameInput.value = '';
-            render();
-        }
-
-        function handleUndo() {
-            if (state.history.length === 0) {
-                showMessage("هیچ لڤینەک نیە!");
-                return;
-            }
-
-            const lastMove = state.history.pop();
-            const team = state.teams[lastMove.teamId];
-
-            if (team) {
-                team.score -= lastMove.value;
-                showMessage(`${lastMove.value} خال ل "${team.name}" زڤراندەڤە.`);
-            } else {
-                 showMessage(`${lastMove.value} خال زڤری ڤە (ئێدی تیمێ دەستیری نینە).`);
-            }
-            
-            state.selectedValue = 0;
-            render();
-        }
-
-        function handleRemoveTeam(event) {
-            const teamIdToRemove = event.currentTarget.dataset.teamId;
-            const teamName = state.teams[teamIdToRemove].name;
-            const teamHistoryCount = state.history.filter(move => move.teamId === teamIdToRemove).length;
-
-            const confirmationMessage = `تویێ پشت راستی!`;
-
-            showConfirmation(confirmationMessage, () => {
-                delete state.teams[teamIdToRemove];
-                state.history = state.history.filter(move => move.teamId !== teamIdToRemove);
-                state.selectedValue = 0;
-                
-                render();
-                showMessage(`تیم "${teamName}" هاتە ژێبرن.`);
-            });
-            event.stopPropagation();
-        }
-        
-        function handleReset() {
-            let confirmationMessage;
-            let resetFunction;
-
-            if (state.isGameActive) {
-                confirmationMessage = "تویێ پشت راستی کو یاریێ ب دوماهیک بینی؟";
-                resetFunction = () => {
-                    Object.values(state.teams).forEach(team => team.score = 0);
-                    state.selectedValue = 0;
-                    state.history = [];
-                    state.isGameActive = false;
-                    render();
-                };
-            } else {
-                confirmationMessage = "تویێ پشت راستی؟.";
-                resetFunction = () => {
-                    state.teams = {};
-                    state.nextTeamId = 1;
-                    state.selectedValue = 0;
-                    state.history = [];
-                    render();
-                };
-            }
-            
-            showConfirmation(confirmationMessage, resetFunction);
-        }
-        
-        // --- Initialization ---
-        function initApp() {
-            scoreValues.forEach(value => {
-                const button = document.createElement('button');
-                button.textContent = value;
-                button.dataset.value = value;
-                button.className = getButtonClass(value, false);
-                button.addEventListener('click', handleValueSelection);
-                elements.valueButtonsContainer.appendChild(button);
-            });
-
-            elements.addTeamButton.addEventListener('click', handleAddTeam);
-            elements.undoButton.addEventListener('click', handleUndo);
-            elements.resetButton.addEventListener('click', handleReset);
-            elements.confirmYesButton.addEventListener('click', confirmAction);
-            
-            elements.newTeamNameInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    handleAddTeam();
+                if (guessedLetters.includes(char)) {
+                    box.classList.add("revealed");
                 }
-            });
+                container.appendChild(box);
+            }
 
-            render();
+            // Check win condition
+            const allRevealed = secretWord.split('').every(char => guessedLetters.includes(char));
+            if (allRevealed && secretWord.length > 0) {
+                endGame(true);
+            } else if (wrongGuesses.length >= maxTries) {
+                endGame(false);
+            }
         }
 
-        window.onload = initApp;
+        function makeGuess() {
+            const inputField = document.getElementById("letter-input");
+            const letter = inputField.value.toLowerCase().trim();
+            inputField.value = "";
 
+            if (!letter.match(/^[a-z]$/)) {
+                alert("Please enter a single valid letter.");
+                return;
+            }
+
+            if (guessedLetters.includes(letter) || wrongGuesses.includes(letter)) {
+                alert("You already guessed that letter!");
+                return;
+            }
+
+            if (secretWord.includes(letter)) {
+                guessedLetters.push(letter);
+            } else {
+                wrongGuesses.push(letter);
+                document.getElementById("tries-left").innerText = maxTries - wrongGuesses.length;
+                document.getElementById("wrong-letters").innerText = wrongGuesses.join(", ");
+            }
+
+            buildWordBoard();
+
+            // Trigger hint area on the last try
+            if (wrongGuesses.length === maxTries - 1) {
+                document.getElementById("hint-section").classList.remove("hidden");
+            }
+        }
+
+        function requestHint() {
+            let hint = prompt("Player 1: Enter a helpful hint for Player 2:");
+            if (hint) {
+                const hintBox = document.getElementById("hint-display");
+                hintBox.innerText = "Hint: " + hint;
+                hintBox.classList.remove("hidden");
+            }
+        }
+
+        function endGame(won) {
+            document.getElementById("game-screen").classList.add("hidden");
+            document.getElementById("game-over-screen").classList.remove("hidden");
+            const resultText = won ? "🎉 Player 2 Won! All letters scratched out!" : "💀 Player 2 Lost! Player 1's word stays hidden.";
+            document.getElementById("game-result").innerText = resultText;
+        }
     </script>
 </body>
 </html>
