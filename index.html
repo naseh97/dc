@@ -29,7 +29,7 @@
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            position: relative; /* Needed for absolute positioning of the exit button */
+            position: relative;
         }
 
         /* Top-Left Exit Button */
@@ -131,18 +131,19 @@
 <body>
 
     <div class="container" id="main-container">
-        <!-- Global Exit Button (Appears on screens past setup) -->
+        <!-- Global Exit Button -->
         <button id="exit-btn" class="exit-btn hidden" onclick="resetToHome()">🚪 Exit</button>
 
         <h1>Scratch Word Game</h1>
         <p>Two-player live guessing challenge</p>
 
-        <!-- Phase 1: Game Setup (Number of Players & Names) -->
+        <!-- Phase 1: Game Setup -->
         <div id="setup-names-screen">
             <h3>Game Setup</h3>
             <label style="color: var(--muted); display: block; margin-bottom: 5px;">Number of Players:</label>
-            <select id="num-players" disabled>
+            <select id="num-players">
                 <option value="2" selected>2 Players</option>
+                <option value="3">3 Players (Coming Soon)</option>
             </select><br>
             
             <input type="text" id="p1-name" placeholder="Player 1 Name (Word Maker)"><br>
@@ -207,18 +208,15 @@
         let maxTries = 7;
 
         function resetToHome() {
-            // Reset variables
             secretWord = "";
             guessedLetters = [];
             wrongGuesses = [];
             
-            // Clear input fields
             document.getElementById("secret-word-input").value = "";
             document.getElementById("letter-input").value = "";
             document.getElementById("hint-display").classList.add("hidden");
             document.getElementById("hint-section").classList.add("hidden");
 
-            // Show setup screen, hide others and exit button
             document.getElementById("setup-names-screen").classList.remove("hidden");
             document.getElementById("setup-word-screen").classList.add("hidden");
             document.getElementById("game-screen").classList.add("hidden");
@@ -227,6 +225,12 @@
         }
 
         function goToWordScreen() {
+            const numPlayers = document.getElementById("num-players").value;
+            if (numPlayers !== "2") {
+                alert("Currently, this layout supports 2 players. More player slots coming soon!");
+                return;
+            }
+
             const name1 = document.getElementById("p1-name").value.trim();
             const name2 = document.getElementById("p2-name").value.trim();
             
@@ -241,7 +245,7 @@
 
             document.getElementById("setup-names-screen").classList.add("hidden");
             document.getElementById("setup-word-screen").classList.remove("hidden");
-            document.getElementById("exit-btn").classList.remove("hidden"); // Show exit button
+            document.getElementById("exit-btn").classList.remove("hidden");
         }
 
         function startGame() {
@@ -323,7 +327,7 @@
         function endGame(won) {
             document.getElementById("game-screen").classList.add("hidden");
             document.getElementById("game-over-screen").classList.remove("hidden");
-            document.getElementById("exit-btn").classList.add("hidden"); // Hide exit on game over screen
+            document.getElementById("exit-btn").classList.add("hidden");
             
             const resultText = won ? `🎉 ${p2Name} Won! All letters scratched out!` : `💀 ${p2Name} Lost! ${p1Name} wins.`;
             document.getElementById("game-result").innerText = resultText;
